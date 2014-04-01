@@ -19,6 +19,7 @@ file2Data<-function(myfilename) {
     mydata$min<-100*(mydata$interval/100 - mydata$hour) # minutes
     mydata$time<-sprintf('%s:%s:00', mydata$hour, mydata$min) # hh:mm:00
     mydata$posix<-as.POSIXct(paste(mydata$date, mydata$time)) # posix time of DateTime
+    mydata$wd<-weekdays(mydata$posix)
     mydata
 }
 # daily steps
@@ -75,6 +76,15 @@ intervalData<-function(myd) {
     #mydata$posix<-as.POSIXct(paste(mydata$date, mydata$time)) # posix time of DateTime
     mydata    
 }
+
+intervalDataWeekday<-function(myd) {
+    mytemp<-subset( myd, ! myd$wd %in% c('Saturday','Sunday'))
+    intervalData(mytemp)
+}
+intervalDataWeekend<-function(myd) {
+    mytemp<-subset( myd, myd$wd %in% c('Saturday','Sunday'))
+    intervalData(mytemp)
+}
 getIntervalMax<-function(myseg) {
     mymax<-myseg[ myseg$sum == max(myseg$sum), ]
     mymax$interval
@@ -84,15 +94,28 @@ getIntervalMax<-function(myseg) {
 #
 #  tsplot( myintv$sum )
 #
-tsplot<-function(myseg, myfile='') {
+tsplot<-function(myseg, mytext='', myfile='') {
+    if (mytext!='') { mymain=paste(mytext,'Average daily step pattern per interval' )}
+    else{
+        mymain='Average daily step pattern per interval'
+    }
     if (myfile!='') { png(filename=myfile) }
-    
-    plot(myseg$sum ~ myseg$interval, type='l', xlab='Interval (max segment show in red)', ylab='Steps',main='Average daily step pattern per interval' )
+    plot(myseg$sum ~ myseg$interval, type='l',
+         xlab='Interval (max segment show in red)',
+         ylab='Steps', main=mymain)
     mymax<-getIntervalMax(myseg)
     points( x=mymax, y=0, pch=20, cex=3, col='red')
     if (myfile!='') { dev.off() }
 }
-
+tsplot2<-function(mydata,myfile='') {
+    mysegwe = intervalDataWeekend(mydata)
+    mysegwd = intervalDataWeekday(mydata)
+    if (myfile!='') { png(filename=myfile) }
+    par(mfrow=c(2,1))
+    tsplot(mysegwe, 'weekend')
+    tsplot(mysegwd, 'weekday')
+    if (myfile!='') { dev.off() }    
+}
 #
 #
 #

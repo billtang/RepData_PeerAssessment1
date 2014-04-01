@@ -134,10 +134,6 @@ intervalData<-function(myd) {
     mydata    
 }
 ```
-```r
-myseg<-intervalData(mydata)
-
-```
 
 ### Time series plot
 ```r
@@ -146,18 +142,40 @@ myseg<-intervalData(mydata)
 #
 #  tsplot( myseg$sum )
 #
-tsplot<-function(myseg, myfile='') {
+tsplot<-function(myseg, mytext='', myfile='') {
+    if (mytext!='') { mymain=paste(mytext,'Average daily step pattern per interval' )}
+    else{
+        mymain='Average daily step pattern per interval'
+    }
     if (myfile!='') { png(filename=myfile) }
-    
-    plot(myseg$sum ~ myseg$interval, type='l', xlab='Interval (max segment show in red)', ylab='Steps',main='Average daily step pattern per interval' )
+    plot(myseg$sum ~ myseg$interval, type='l',
+         xlab='Interval (max segment show in red)',
+         ylab='Steps', main=mymain)
     mymax<-getIntervalMax(myseg)
     points( x=mymax, y=0, pch=20, cex=3, col='red')
     if (myfile!='') { dev.off() }
 }
+```
+```r
+myseg<-intervalData(mydata)
+tsplot(myseg,'seg.png')  # interval plot
+```
+## Are there differences in activity patterns between weekdays and weekends?
+We will plot these side by side:
+```r
+tsplot2<-function(mydata,myfile='') {
+    mysegwe = intervalDataWeekend(mydata)
+    mysegwd = intervalDataWeekday(mydata)
+    if (myfile!='') { png(filename=myfile) }
+    par(mfrow=c(2,1))
+    tsplot(mysegwe, 'weekend')
+    tsplot(mysegwd, 'weekday')
+    if (myfile!='') { dev.off() }    
+}
 
 ```
 ```r
-tsplot(myseg,'seg.png')  # myseg$sum
+tsplot2(mydata,'ww.png')  # weekday vs weekend interval plot
 ```
 
 
