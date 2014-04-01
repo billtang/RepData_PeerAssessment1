@@ -1,13 +1,3 @@
-# Reproducible Research: Peer Assessment 1
-
-This assignment uses data from personal device to provide an analysis of activity patterns. The data is steps taken as collected every 5 minutes from 10/1/2012 through 11/30/2012.
-
-
-## Loading and preprocessing the data
-
-The original data is in a zip file. It is downloaded and read as a data frame. The date and the interval columns are converted to form a posix date time stamp column.
-
-```r
 #
 # Download the data. Get filename after unzip
 #
@@ -31,26 +21,6 @@ file2Data<-function(myfilename) {
     mydata$posix<-as.POSIXct(paste(mydata$date, mydata$time)) # posix time of DateTime
     mydata
 }
-
-myfile<-getFile() # myfile is 'activity.csv'
-mydata<-file2Data('activity.csv')
-```
-
-Examine the data:
-
-```r
-summary(mydata$steps)
-```
-Result:
-```
-   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's
-   0.00    0.00    0.00   37.38   12.00  806.00    2304
-```
-
-## What is mean total number of steps taken per day?
-
-We aggregate the steps of each interval of 5 minutes by date. The mean is about 10766 steps per day.
-```r
 # daily steps
 #   mydaily<-getDaily(mydata)
 #
@@ -58,13 +28,8 @@ getDaily<-function(myd) {
     mydaily<-aggregate(steps ~ date, myd, sum)
     mydaily    
 }
-
-```
-Another way of getting daily data:
-
-```r
 library(plyr)
-getDaily<-function(myd) {
+getDaily2<-function(myd) {
     myd<-myd[!is.na(myd$steps),] 
     ddply(myd, .(date), summarize,
           mean=round(mean(steps),2),
@@ -72,29 +37,15 @@ getDaily<-function(myd) {
           sum=round(sum(steps),2)
           )
 }
-plotDaily2File<-function(mydaily,myfile='') {
-    plotDaily(mydaily)
-    ggsave(file=myfile)
-    dev.off()
-}
-
-```
-
-## What is the average daily activity pattern?
-
-We draw a histogram, and show the mean and median.
-
-```r
-#
 # plot daily
 #   plotDaily(mydaily)
 #
-plotDaily <- function(mydaily, myfile='') {
+library(ggplot2)
+plotDaily <- function(mydaily) {
     mymean<-mean(mydaily$steps)
     mymedian<-median(mydaily$steps)
     mylabels=c(paste('Mean:', mymean), paste('Median:', mymedian))
     cols = c('blue', 'orange')
-    if (myfile!='') { png(myfile) }
     ggplot(mydaily, aes(x=steps)) +
         geom_histogram(fill='black') +      #,binwidth=1500) +
         geom_point(aes(x=mymean, y=0, color='blue'), size=4, shape=25) + 
@@ -103,22 +54,13 @@ plotDaily <- function(mydaily, myfile='') {
         labs(title='Histogram of daily steps taken',
              x='Number of steps', y='Count') + 
         theme(legend.position = 'bottom')
-    if (myfile!='') { devoff() }
+}
+plotDaily2File<-function(mydaily,myfile='') {
+    plotDaily(mydaily)
+    ggsave(file=myfile)
+    dev.off()
 }
 
-mydaily<-getDaily(mydata)
-plotDaily(mydaily,'stepsDaily.png')
-
-```
-
-
-### Sum and plot of steps of 5 minute intervals.
-
-
-```r
-#
-# 
-#
 intervalData<-function(myd) {
     # na.rm=T  otherwise you will get NA as result for the column values
     mydata<-ddply(myd, .(interval), summarize, 
@@ -133,18 +75,14 @@ intervalData<-function(myd) {
     #mydata$posix<-as.POSIXct(paste(mydata$date, mydata$time)) # posix time of DateTime
     mydata    
 }
-```
-```r
-myseg<-intervalData(mydata)
-
-```
-
-### Time series plot
-```r
+getIntervalMax<-function(myseg) {
+    mymax<-myseg[ myseg$sum == max(myseg$sum), ]
+    mymax$interval
+}
 #
 # Plot time series data:
 #
-#  tsplot( myseg$sum )
+#  tsplot( myintv$sum )
 #
 tsplot<-function(myseg, myfile='') {
     if (myfile!='') { png(filename=myfile) }
@@ -155,10 +93,18 @@ tsplot<-function(myseg, myfile='') {
     if (myfile!='') { dev.off() }
 }
 
-```
-```r
-tsplot(myseg,'seg.png')  # myseg$sum
-```
+#
+#
+#
+runFile<-function(filename) {
+    mydata<-file2Data(filename)
+    summary(mydata$steps)
+    mydaily<-getDaily(mydata)
+    plotDaily(mydaily,'daily.png')
+    myseg<-intervalData(mydata)
+    tsplot(myseg,'seg.png')
+}
 
 
-
+#myfile<-getFile() # myfile is 'activity.csv'
+#runFile('activity.csv')
