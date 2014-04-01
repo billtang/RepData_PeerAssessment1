@@ -29,6 +29,7 @@ file2Data<-function(myfilename) {
     mydata$min<-100*(mydata$interval/100 - mydata$hour) # minutes
     mydata$time<-sprintf('%s:%s:00', mydata$hour, mydata$min) # hh:mm:00
     mydata$posix<-as.POSIXct(paste(mydata$date, mydata$time)) # posix time of DateTime
+    mydata$wd<-weekdays(mydata$posix) # used for calculating weekend
     mydata
 }
 
@@ -161,6 +162,19 @@ myseg<-intervalData(mydata)
 tsplot(myseg,'seg.png')  # interval plot
 ```
 ## Are there differences in activity patterns between weekdays and weekends?
+
+We may filter by category whether it is of weekend:
+```r
+intervalDataWeekday<-function(myd) {
+    mytemp<-subset( myd, ! myd$wd %in% c('Saturday','Sunday'))
+    intervalData(mytemp)
+}
+intervalDataWeekend<-function(myd) {
+    mytemp<-subset( myd, myd$wd %in% c('Saturday','Sunday'))
+    intervalData(mytemp)
+}
+
+```
 We will plot these side by side:
 ```r
 tsplot2<-function(mydata,myfile='') {
